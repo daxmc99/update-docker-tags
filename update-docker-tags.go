@@ -113,6 +113,7 @@ func updateDockerTags(o *options, root string) error {
 		data = replaceAllSubmatchFunc(o.tagPattern, data, func(groups [][]byte) [][]byte {
 
 			repositoryName := string(groups[0])
+			repositoryName = isLibraryRepo(repositoryName)
 			repository, err := newRepository(o, repositoryName)
 			if err != nil {
 				replaceErr = errors.Wrapf(err, "when initializing repository %q", repositoryName)
@@ -187,6 +188,9 @@ func (r *repository) findLatestSemverTag() (string, error) {
 		v, err := semver.NewVersion(t)
 		if err != nil {
 			continue // ignore non-semver tags
+		}
+		if v.Minor() == 0 { //might just want to exclude alpine all together
+			continue //ignore values like 123124123.0.0
 		}
 
 		if r.constraint != nil {
@@ -396,4 +400,12 @@ func newRepository(o *options, repositoryName string) (*repository, error) {
 
 		authToken: token,
 	}, nil
+}
+
+// isLibraryRepo checks if the repository is a "library" style repo; doesn't have a "/"
+func isLibraryRepo(repositoryName string) string {
+	if strings.Contains(repositoryName, "/") {
+		return repositoryName
+	}
+	return "library/" + repositoryName
 }
