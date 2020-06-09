@@ -120,15 +120,15 @@ func updateDockerTags(o *options, root string) error {
 				return groups
 			}
 
-			originalTag := string(groups[1])
+			repository.originalTag = string(groups[1])
 			var newTag string
 
-			if isNonSemverTag(originalTag) {
-				newTag = originalTag
+			if isNonSemverTag(repository.originalTag) {
+				newTag = repository.originalTag
 			} else {
 				latest, err := repository.findLatestSemverTag()
 				if err != nil {
-					replaceErr = errors.Wrapf(err, "when finding the latest semver tag for '%s:%s'", repository.name, originalTag)
+					replaceErr = errors.Wrapf(err, "when finding the latest semver tag for '%s:%s'", repository.name, repository.originalTag)
 					return groups
 				}
 
@@ -163,8 +163,9 @@ func updateDockerTags(o *options, root string) error {
 }
 
 type repository struct {
-	name       string
-	constraint *semver.Constraints
+	name        string
+	constraint  *semver.Constraints
+	originalTag string
 
 	authToken string
 }
@@ -206,9 +207,30 @@ func (r *repository) findLatestSemverTag() (string, error) {
 		return "", fmt.Errorf("no semver tags found for %q", r.name)
 	}
 
+	versions = filterFlavor(r.originalTag, versions)
+
 	sort.Sort(sort.Reverse(semver.Collection(versions)))
 	latestTag := versions[0].Original()
 	return latestTag, nil
+}
+
+func filterFlavor(tag string, ver semver.Collection) semver.Collection {
+	s := strings.Split(tag, "-")
+	if len(s) <= 1 { //no flavor, no-op
+		return ver
+	}
+	if len(s) > 2 {
+		log.Println("too many \"-\" to determine if this image has a flavor, check results")
+		return ver
+	}
+	flavor := s[1]
+	var vs semver.Collection
+	for _, v := range ver {
+		if strings.Contains(v.String(), flavor) {
+			vs = append(vs, v)
+		}
+	}
+	return vs
 }
 
 // Effectively the same as:
