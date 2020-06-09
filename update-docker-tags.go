@@ -18,7 +18,7 @@ import (
 )
 
 var TAG_PATTERN = regexp.MustCompile(`(sourcegraph/.+):(.+)@(sha256:[[:alnum:]]+)`)
-var GENERIC_TAG_PATTERN = regexp.MustCompile(` (\S+.+):(.+)@(sha256:[[:alnum:]]+)`) //https://regex101.com/r/hP8bK1/37
+var PATTERN = regexp.MustCompile(` (\S+.+):(.+)@(sha256:[[:alnum:]]+)`) //https://regex101.com/r/hP8bK1/37
 
 var constraintArgs rawConstraints
 
@@ -69,7 +69,7 @@ Examples:
 			log.Fatalf("failed to parse custom regex, err: %s", err)
 		}
 	} else if *useGeneric {
-		tagPattern = GENERIC_TAG_PATTERN
+		tagPattern = PATTERN
 	} else {
 		tagPattern = TAG_PATTERN
 	}
