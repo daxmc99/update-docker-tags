@@ -1,5 +1,5 @@
 FROM golang:1.14-alpine@sha256:6042b9cfb4eb303f3bdcbfeaba79b45130d170939318de85ac5b9508cb6f0f7e AS builder
-
+MAINTAINER <test>
 WORKDIR /go/src/update-docker-tags
 
 COPY go.* ./
